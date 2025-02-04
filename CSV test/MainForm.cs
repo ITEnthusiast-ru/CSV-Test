@@ -18,15 +18,18 @@ namespace CSV_test
         public MainForm()
         {
             InitializeComponent();
+            textBoxSearch.TextChanged += TextBoxSearch_TextChanged; // Событие при изменении текста
+            textBoxSearch.KeyDown += TextBoxSearch_KeyDown; // Событие при нажатии клавиш
+            listBoxResults.Visible = false; // Скрываем ListBox по умолчанию
         }
 
-        private void buttonSearch_Click(object sender, EventArgs e)
+        private void TextBoxSearch_TextChanged(object sender, EventArgs e)
         {
             string searchDigits = textBoxSearch.Text.Trim();
 
             if (string.IsNullOrEmpty(searchDigits))
             {
-                MessageBox.Show("Введите цифры для поиска.", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                listBoxResults.Visible = false; // Скрываем ListBox, если поле пустое
                 return;
             }
 
@@ -40,10 +43,54 @@ namespace CSV_test
                 {
                     listBoxResults.Items.Add(result);
                 }
+                listBoxResults.Visible = true; // Показываем ListBox с результатами
+                listBoxResults.Top = textBoxSearch.Bottom; // Позиционируем ListBox под TextBox
+                listBoxResults.Left = textBoxSearch.Left;
+                listBoxResults.Width = textBoxSearch.Width;
             }
             else
             {
-                MessageBox.Show("Совпадений не найдено.", "Информация", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                listBoxResults.Visible = false; // Скрываем ListBox, если результатов нет
+            }
+        }
+
+        private void TextBoxSearch_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                // Если нажат Enter и есть выбранный элемент в ListBox
+                if (listBoxResults.SelectedIndex != -1)
+                {
+                    textBoxSearch.Text = listBoxResults.SelectedItem.ToString();
+                    listBoxResults.Visible = false; // Скрываем ListBox после выбора
+                }
+            }
+            else if (e.KeyCode == Keys.Down)
+            {
+                // Перемещаем фокус на ListBox и выбираем первый элемент
+                if (listBoxResults.Items.Count > 0)
+                {
+                    listBoxResults.Focus();
+                    listBoxResults.SelectedIndex = 0;
+                }
+            }
+        }
+
+        private void ListBoxResults_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                // Если нажат Enter в ListBox
+                if (listBoxResults.SelectedIndex != -1)
+                {
+                    textBoxSearch.Text = listBoxResults.SelectedItem.ToString();
+                    listBoxResults.Visible = false; // Скрываем ListBox после выбора
+                }
+            }
+            else if (e.KeyCode == Keys.Up && listBoxResults.SelectedIndex == 0)
+            {
+                // Если достигнут верхний элемент, возвращаем фокус в TextBox
+                textBoxSearch.Focus();
             }
         }
 
@@ -71,6 +118,11 @@ namespace CSV_test
             }
 
             return matches;
+        }
+
+        private void MainForm_Click(object sender, EventArgs e)
+        {
+            listBoxResults.Visible = false;
         }
     }
 }
