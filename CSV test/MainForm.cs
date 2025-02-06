@@ -18,13 +18,15 @@ namespace CSV_test
         public MainForm()
         {
             InitializeComponent();
-            textBoxSearch.TextChanged += TextBoxSearch_TextChanged; // Событие при изменении текста
-            textBoxSearch.KeyDown += TextBoxSearch_KeyDown; // Событие при нажатии клавиш
+           
             listBoxResults.Visible = false; // Скрываем ListBox по умолчанию
         }
 
         private void TextBoxSearch_TextChanged(object sender, EventArgs e)
+
         {
+          
+            
             string searchDigits = textBoxSearch.Text.Trim();
 
             if (string.IsNullOrEmpty(searchDigits))
@@ -54,27 +56,7 @@ namespace CSV_test
             }
         }
 
-        private void TextBoxSearch_KeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.KeyCode == Keys.Enter)
-            {
-                // Если нажат Enter и есть выбранный элемент в ListBox
-                if (listBoxResults.SelectedIndex != -1)
-                {
-                    textBoxSearch.Text = listBoxResults.SelectedItem.ToString();
-                    listBoxResults.Visible = false; // Скрываем ListBox после выбора
-                }
-            }
-            else if (e.KeyCode == Keys.Down)
-            {
-                // Перемещаем фокус на ListBox и выбираем первый элемент
-                if (listBoxResults.Items.Count > 0)
-                {
-                    listBoxResults.Focus();
-                    listBoxResults.SelectedIndex = 0;
-                }
-            }
-        }
+      
 
         private void ListBoxResults_KeyDown(object sender, KeyEventArgs e)
         {
@@ -105,9 +87,11 @@ namespace CSV_test
                     string line;
                     while ((line = reader.ReadLine()) != null)
                     {
-                        if (line.StartsWith(digits))
+                        string[] parts = line.Split(';');
+                        if (parts.Length > 0 && parts[0].StartsWith(digits))
                         {
-                            matches.Add(line);
+                            string firstNineDigits = parts[0].Length >= 9 ? parts[0].Substring(0, 9) : parts[0];
+                            matches.Add(firstNineDigits);
                         }
                     }
                 }
@@ -118,6 +102,51 @@ namespace CSV_test
             }
 
             return matches;
+        }
+
+        private void TextBoxSearch_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                if (listBoxResults.SelectedIndex != -1)
+                {
+                    string selectedItem = listBoxResults.SelectedItem.ToString();
+                    string fullLine = FindFullLine(selectedItem);
+                    textBoxSearch.Text = fullLine;
+                    listBoxResults.Visible = false;
+                }
+            }
+            else if (e.KeyCode == Keys.Down)
+            {
+                if (listBoxResults.Items.Count > 0)
+                {
+                    listBoxResults.Focus();
+                    listBoxResults.SelectedIndex = 0;
+                }
+            }
+        }
+
+        private string FindFullLine(string searchTerm)
+        {
+            try
+            {
+                using (StreamReader reader = new StreamReader(_filePath))
+                {
+                    string line;
+                    while ((line = reader.ReadLine()) != null)
+                    {
+                        if (line.StartsWith(searchTerm))
+                        {
+                            return line;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка при чтении файла: {ex.Message}", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            return string.Empty;
         }
 
         private void MainForm_Click(object sender, EventArgs e)
